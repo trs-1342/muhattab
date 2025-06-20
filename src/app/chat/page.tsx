@@ -5,9 +5,16 @@ import io from "socket.io-client";
 const socket = io("https://chat-server-1a4z.onrender.com");
 
 export default function ChatPage() {
+  type Message = {
+    messageID: string;
+    time: string;
+    username: string;
+    mesaj: string;
+  };
+
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
