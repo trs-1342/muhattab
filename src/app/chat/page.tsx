@@ -16,6 +16,7 @@ export default function ChatPage() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [lastSentTime, setLastSentTime] = useState<number>(0);
 
   useEffect(() => {
     const cookies = Object.fromEntries(
@@ -42,9 +43,19 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSend = () => {
+    const now = Date.now();
+
+    // 3 saniye (3000 ms) dolmadıysa engelle
+    if (now - lastSentTime < 3000) {
+      alert("3 saniyede sadece 1 mesaj gönderebilirsin.");
+      return;
+    }
+
     if (!message.trim()) return;
+
     socket.emit("newMessage", { username, mesaj: message });
     setMessage("");
+    setLastSentTime(now);
   };
 
   const handleLogout = () => {
@@ -80,9 +91,16 @@ export default function ChatPage() {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault(); // enter basınca form göndermesini engelle
+              handleSend();
+            }
+          }}
           placeholder="Mesaj yaz..."
           className="flex-1 p-2 bg-black border border-white"
         />
+
         <button
           onClick={handleSend}
           className="bg-white text-black px-4 py-2 hover:bg-gray-200"
