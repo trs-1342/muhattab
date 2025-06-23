@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.2.6",
+    "@vercel/kv": "^3.0.0",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
     "next": "15.3.4",

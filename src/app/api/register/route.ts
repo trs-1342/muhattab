@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { kv } from "@vercel/kv";
 import { v4 as uuidv4 } from "uuid";
 
-const usersPath = path.join(process.cwd(), "data/users.json");
-const blockedPath = path.join(process.cwd(), "data/blockusername.json");
+// Bloklanan kullanıcı adlarını KV'ye manuel eklemen gerekir. Örneğin: blocked:username1, blocked:username2
 
 export async function POST(req: Request) {
   try {
@@ -27,32 +25,18 @@ export async function POST(req: Request) {
       });
     }
 
-    // Engellenen kullanıcı adları kontrolü
-    const blockedList = fs.existsSync(blockedPath)
-      ? JSON.parse(fs.readFileSync(blockedPath, "utf-8"))
-      : [];
-
-    if (blockedList.includes(username.toLowerCase())) {
+    // Engellenmiş kullanıcı adı kontrolü
+    const isBlocked = await kv.get(`blocked:${username.toLowerCase()}`);
+    if (isBlocked) {
       return NextResponse.json({
         success: false,
         message: "Bu kullanıcı adı kullanılamaz.",
       });
     }
 
-    // Var olan kullanıcılar kontrolü
-    const users = fs.existsSync(usersPath)
-      ? JSON.parse(fs.readFileSync(usersPath, "utf-8"))
-      : [];
-
-    type User = {
-      id: string;
-      username: string;
-      password: string;
-      createTime: string;
-    };
-
-    const exists = (users as User[]).find((u) => u.username === username);
-    if (exists) {
+    // Kullanıcı var mı kontrolü
+    const existingUser = await kv.get(`user:${username.toLowerCase()}`);
+    if (existingUser) {
       return NextResponse.json({
         success: false,
         message: "Kullanıcı adı zaten var",
@@ -67,8 +51,7 @@ export async function POST(req: Request) {
       createTime: new Date().toISOString(),
     };
 
-    users.push(newUser);
-    fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+    await kv.set(`user:${username.toLowerCase()}`, newUser);
 
     return NextResponse.json({ success: true });
   } catch (error) {
