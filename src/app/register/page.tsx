@@ -7,15 +7,24 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
 
   const handleRegister = async () => {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      window.location.href = "/login";
-    } else {
-      setMessage(data.message);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // 👈 Bu satır şart!
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = "/login";
+      } else {
+        setMessage(data.message || "Bir hata oluştu.");
+      }
+    } catch (error) {
+      console.error("Kayıt hatası:", error);
+      setMessage("Sunucuya bağlanırken bir hata oluştu.");
     }
   };
 
